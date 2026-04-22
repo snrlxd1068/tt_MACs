@@ -67,7 +67,7 @@ assign Y_sign = r_in_data[IDATAW-1];
 assign R_sign = (X_val > Y_val)? X_sign: Y_sign;
 
 logic [RESULTW-2:0] diff;
-logic overflow;
+logic [RESULTW-2:0] scaled_diff;
 
 always_comb begin
     if (X_val > Y_val) begin
@@ -76,9 +76,8 @@ always_comb begin
         diff = (Y_val - X_val);
     end
     if (diff[RESULTW-2] == 1) diff = {1'b0,{(RESULTW-2){1'b1}}}; //overflow
-    logic [RESULTW-2:0] scaled_diff;
     scaled_diff = diff >> RESULTFRACW;
-    diff = (scaled_diff > (DMAX-1)*STEP)? (DMAX-1)*STEP : scaled_diff[4:0];
+    diff = (scaled_diff > (DMAX-1)*DSTEP)? (DMAX-1)*DSTEP : scaled_diff[4:0];
 end
 logic [ADDRW-1:0] addr;
 
@@ -87,26 +86,15 @@ assign addr = (X_sign == Y_sign)? (diff) : (diff + LUTDEPTH);// ? delta_plus : d
 logic signed [RESULTW-2:0] delta;
 lut_rom mem #(.DATAW(LUTW), .DEPTH(MEMDEPTH))(
     .addr(addr),
-    .data_out(delta),
+    .data_out(delta)
 );
 always_comb begin
     R_val = (X_val > Y_val)? (X_val + delta) : (Y_val + delta);
-
-    if (X_val > Y_val) begin
-        R_val = X_val + delta;
-        if (R_val[RESULTW-2] == 1 && X_val[RESULTW-2] == 0 && delta[RESULTW-2] == 0) begin
-            R_val = {1'b0, {(RESULTW-2){1'b1}}};
-        end else if (R_val[RESULTW-2] == 0 && X_val[RESULTW-2] == 1 && delta[RESULTW-2] == 1) begin
-            R_val = {1'b1, {(RESULTW-2){1'b0}}};
-        end
-    end else begin
-        R_val = Y_val + delta;
-        if (R_val[RESULTW-2] == 1 && Y_val[RESULTW-2] == 0 && delta[RESULTW-2] == 0) begin
-            R_val = {1'b0, {(RESULTW-2){1'b1}}};
-        end else if (R_val[RESULTW-2] == 0 && Y_val[RESULTW-2] == 1 && delta[RESULTW-2] == 1) begin
-            R_val = {1'b1, {(RESULTW-2){1'b0}}};
-        end
-
+    if (R_val[RESULTW-2] == 1 && X_val[RESULTW-2] == 0 && delta[RESULTW-2] == 0) begin
+        R_val = {1'b0, {(RESULTW-2){1'b1}}};
+    end else if (R_val[RESULTW-2] == 0 && X_val[RESULTW-2] == 1 && delta[RESULTW-2] == 1) begin
+        R_val = {1'b1, {(RESULTW-2){1'b0}}};
+    end
 end
 
 endmodule

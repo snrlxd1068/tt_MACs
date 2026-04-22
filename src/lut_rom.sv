@@ -3,7 +3,7 @@ module lut_rom #(
     parameter DEPTH = 40,
     parameter ADDRW = $clog2(DEPTH)
 )(
-    input [ADDRw-1:0] addr,
+    input [ADDRW-1:0] addr,
     output [DATAW-1:0] data_out
 );
 

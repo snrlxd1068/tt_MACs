@@ -58,6 +58,7 @@ assign Y_sign = r_in_data[IDATAW-1];
 assign R_sign = (X_val > Y_val)? X_sign: Y_sign;
 
 logic [RESULTW-2:0] diff;
+logic [RESULTW-2:0] scaled_diff;
 
 always_comb begin
     if (X_val > Y_val) begin
@@ -66,7 +67,6 @@ always_comb begin
         diff = (Y_val - X_val);
     end
     if (diff[RESULTW-2] == 1) diff = {1'b0,{(RESULTW-2){1'b1}}}; //overflow
-    logic [RESULTW-2:0] scaled_diff;
     scaled_diff = diff >> RESULTFRACW;
     diff = (scaled_diff > 5'd19)? 5'd19 : scaled_diff[4:0];
 end

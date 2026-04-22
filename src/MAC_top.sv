@@ -1,4 +1,4 @@
-module MAC_linear #(
+module tt_um_snrlxd1068_MACs #(
     parameter IDATAW = 8,
     parameter IINTW = 3,
     parameter IFRACW = 4,
@@ -19,7 +19,7 @@ module MAC_linear #(
     input i_key, // a or b
     input [IDATAW-1:0] i_data,
     output logic signed [ODATAW-1:0] o_data,
-    output logic [OUTSELW-1:0] o_section,// or a starting flag
+    output logic [OUTSELW-1:0] o_section// or a starting flag
 );
 
 logic r_valid, both_valid;
@@ -37,7 +37,7 @@ always_ff @(posedge clk) begin
         r_key <= 0;
         r_mode <= 0;
         r_i_data <= 0;
-        state <= 0;
+        state <= INIT;
         r_valid_data_buffer <= 0;
     end else begin
         r_valid <= i_valid;
@@ -63,12 +63,14 @@ always_comb begin
     both_valid = 0;
     w_a_data = 0;
     w_b_data = 0;
+    w_valid_data_buffer = r_valid_data_buffer;
+    nextstate = INIT;
     case(state)
         INIT: begin
             if(r_valid) begin
                 w_valid_data_buffer = r_i_data;
                 nextstate = (r_key == 0)? A_VALID : B_VALID;
-            end else nextstate = INIT;
+            end
         end
         A_VALID: begin
             w_a_data = r_valid_data_buffer;
@@ -96,6 +98,7 @@ always_comb begin
         end
         default: begin
             nextstate = INIT;
+            w_valid_data_buffer = r_valid_data_buffer;
         end
     endcase
 end
@@ -107,7 +110,7 @@ logic [PADDEDW-1:0] padded_result;
 logic [RESULTW-1:0] r_result, w_result;
 assign padded_result = {{PADBITS{1'b0}}, r_result};
 
-logic [OUTSELW-1] out_counter;
+logic [OUTSELW-1:0] out_counter;
 
 always_comb begin
     case(r_mode)
@@ -151,19 +154,18 @@ linear_mult #(
     .working(linear_working),
     .result(linear_mult_result),
     .o_valid(linear_mult_valid)
-)
+);
 linear_accum #(
     .IDATAW(2*IDATAW),
-    .RESULTW(RESULTW),
+    .RESULTW(RESULTW)
 )(
     .clk(clk),
     .rst_n(rst_n),
     .i_valid(linear_mult_valid),
     .in_data(linear_mult_result),
     .working(linear_working),
-    .result(linear_result),
-    .o_valid(),
-)
+    .result(linear_result)
+);
 
 logic log_mult_valid;
 logic [IDATAW:0] log_mult_result;
@@ -187,29 +189,28 @@ log_accum_lut #(
     .IFRACW(IFRACW),
     .RESULTINTW(RESULTINTW),
     .RESULTFRACW(RESULTFRACW),
-    .DEPTH(DEPTH)
+    .DSTEP(DSTEP),
+    .DMAX(DMAX)
 )(
     .clk(clk),
     .rst_n(rst_n),
     .i_valid(log_mult_valid),
     .in_data(log_mult_result),
     .working(lut_working),
-    .result(lut_result),
-    .o_valid()
+    .result(lut_result)
 );
 log_accum_shift #(
     .IINTW(IINTW),
     .IFRACW(IFRACW),
     .RESULTINTW(RESULTINTW),
-    .RESULTFRACW(RESULTFRACW),
+    .RESULTFRACW(RESULTFRACW)
 )(
     .clk(clk),
     .rst_n(rst_n),
     .i_valid(log_mult_valid),
     .in_data(log_mult_result),
     .working(shift_working),
-    .result(shift_result),
-    .o_valid()
+    .result(shift_result)
 );
 
 endmodule
