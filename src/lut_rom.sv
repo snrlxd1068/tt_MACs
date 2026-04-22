@@ -1,5 +1,5 @@
-module MAC_log_ROM #(
-    parameter DATAW = 24,
+module lut_rom #(
+    parameter DATAW = 28,
     parameter DEPTH = 40,
     parameter ADDRW = $clog2(DEPTH)
 )(

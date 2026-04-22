@@ -49,6 +49,14 @@ always_ff @(posedge clk) begin
     end
 end
 
+logic linear_working, lut_working, shift_working, log_working;
+always_comb begin
+    linear_working = !r_mode[1];
+    log_working = r_mode[1];
+    lut_working = (r_mode[1] && !r_mode[0]);
+    shift_working = (r_mode[1] && r_mode[0]);
+end
+
 logic [IDATAW-1:0] w_a_data, w_b_data; //data signals feeding to multiplier module
 
 always_comb begin
@@ -101,6 +109,15 @@ assign padded_result = {{PADBITS{1'b0}}, r_result};
 
 logic [OUTSELW-1] out_counter;
 
+always_comb begin
+    case(r_mode)
+        2'b00: w_result = linear_result;
+        2'b10: w_result = lut_result;
+        2'b11: w_result = shift_result;
+        default: w_result = linear_result;
+    endcase
+end
+
 always_ff @(posedge clk) begin
     if(~rst_n) begin
         o_data <= 0;
@@ -121,6 +138,7 @@ end
 
 logic linear_mult_valid;
 logic [IDATAW*2-1:0] linear_mult_result;
+logic [RESULTW-1:0] linear_result;
 
 linear_mult #(
     .IDATAW(IDATAW)
@@ -130,6 +148,7 @@ linear_mult #(
     .in_a(w_a_data),
     .in_b(w_b_data),
     .i_valid(both_valid),
+    .working(linear_working),
     .result(linear_mult_result),
     .o_valid(linear_mult_valid)
 )
@@ -141,12 +160,14 @@ linear_accum #(
     .rst_n(rst_n),
     .i_valid(linear_mult_valid),
     .in_data(linear_mult_result),
+    .working(linear_working),
     .result(linear_result),
     .o_valid(),
 )
 
 logic log_mult_valid;
 logic [IDATAW:0] log_mult_result;
+logic [RESULTW-1:0] lut_result, shift_result;
 
 log_mult #(
     .IINTW(IINTW),
@@ -157,6 +178,7 @@ log_mult #(
     .in_a(w_a_data),
     .in_b(w_b_data),
     .i_valid(both_valid),
+    .working(log_working),
     .result(log_mult_result),
     .o_valid(log_mult_valid)
 );
@@ -171,6 +193,7 @@ log_accum_lut #(
     .rst_n(rst_n),
     .i_valid(log_mult_valid),
     .in_data(log_mult_result),
+    .working(lut_working),
     .result(lut_result),
     .o_valid()
 );
@@ -184,6 +207,7 @@ log_accum_shift #(
     .rst_n(rst_n),
     .i_valid(log_mult_valid),
     .in_data(log_mult_result),
+    .working(shift_working),
     .result(shift_result),
     .o_valid()
 );
