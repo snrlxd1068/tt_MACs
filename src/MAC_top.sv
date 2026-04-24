@@ -1,4 +1,4 @@
-module tt_um_snrlxd1068_MACs #(
+module MAC_top #(
     parameter IDATAW = 8,
     parameter IINTW = 3,
     parameter IFRACW = 4,
