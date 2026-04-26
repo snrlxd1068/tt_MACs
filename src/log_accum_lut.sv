@@ -84,12 +84,15 @@ logic [ADDRW-1:0] addr;
 assign addr = (X_sign == Y_sign)? (diff) : (diff + LUTDEPTH);// ? delta_plus : delta_minus
 
 logic signed [RESULTW-2:0] delta;
+logic signed [LUTW-1:0] lut_delta;
+assign delta = {{(RESULTW-LUTW-1){lut_delta[LUTW-1]}},lut_delta};
+
 lut_rom #(
     .DATAW(LUTW),
     .DEPTH(MEMDEPTH)
 ) lut_rom_inst (
     .addr(addr),
-    .data(delta)
+    .data(lut_delta)
 );
 always_comb begin
     R_val = (X_val > Y_val)? (X_val + delta) : (Y_val + delta);
