@@ -6,7 +6,7 @@ SIM ?= icarus
 FST ?= -fst # Use more efficient FST format
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.sv MAC_top.sv linear_mult.sv linear_accum.sv log_mult.sv log_accum_shift.sv log_accum_lut.sv lut_rom.sv log_lut.mem
+PROJECT_SOURCES = project.sv MAC_top.sv linear_mult.sv linear_accum.sv log_mult.sv log_accum_shift.sv log_accum_lut.sv lut_rom.sv
 
 ifneq ($(GATES),yes)
 
@@ -41,3 +41,11 @@ COCOTB_TEST_MODULES = test
 
 # include cocotb's make rules to take care of the simulator setup
 include $(shell cocotb-config --makefiles)/Makefile.sim
+
+# This 'pre-run' step creates the link if it doesn't exist
+.PHONY: link_mem
+link_mem:
+	@ln -sf $(SRC_DIR)/log_lut.mem $(PWD)/log_lut.mem
+
+# Tell the Makefile to run link_mem before the simulation starts
+sim: link_mem

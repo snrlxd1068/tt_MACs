@@ -89,7 +89,7 @@ lut_rom #(
     .DEPTH(MEMDEPTH)
 ) lut_rom_inst (
     .addr(addr),
-    .data_out(delta)
+    .data(delta)
 );
 always_comb begin
     R_val = (X_val > Y_val)? (X_val + delta) : (Y_val + delta);
