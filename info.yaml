@@ -20,10 +20,11 @@ project:
     - "project.sv"
     - "MAC_top.sv"
     - "linear_mult.sv"
+    - "linear_accum.sv"
     - "log_mult.sv"
     - "log_accum_shift.sv"
     - "log_accum_lut.sv"
-    - "MAC_log_ROM.sv"
+    - "lut_ROM.sv"
     - "log_lut.mem"
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
