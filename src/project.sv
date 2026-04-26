@@ -16,7 +16,7 @@ module tt_um_snrlxd1068_MACs (
     input  logic       rst_n     // reset_n - low to reset
 );
 
-MAC_top (
+MAC_top MAC_top(
   .clk(clk),
   .rst_n(rst_n),
   .i_data(ui_in),
