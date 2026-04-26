@@ -145,7 +145,7 @@ logic [RESULTW-1:0] linear_result;
 
 linear_mult #(
     .IDATAW(IDATAW)
-)(
+) linear_mult_inst (
     .clk(clk),
     .rst_n(rst_n),
     .in_a(w_a_data),
@@ -158,7 +158,7 @@ linear_mult #(
 linear_accum #(
     .IDATAW(2*IDATAW),
     .RESULTW(RESULTW)
-)(
+) linear_accum_inst (
     .clk(clk),
     .rst_n(rst_n),
     .i_valid(linear_mult_valid),
@@ -174,7 +174,7 @@ logic [RESULTW-1:0] lut_result, shift_result;
 log_mult #(
     .IINTW(IINTW),
     .IFRACW(IFRACW)
-)(
+) log_mult_inst (
     .clk(clk),
     .rst_n(rst_n),
     .in_a(w_a_data),
@@ -191,7 +191,7 @@ log_accum_lut #(
     .RESULTFRACW(RESULTFRACW),
     .DSTEP(DSTEP),
     .DMAX(DMAX)
-)(
+) log_accum_lut_inst (
     .clk(clk),
     .rst_n(rst_n),
     .i_valid(log_mult_valid),
@@ -204,7 +204,7 @@ log_accum_shift #(
     .IFRACW(IFRACW),
     .RESULTINTW(RESULTINTW),
     .RESULTFRACW(RESULTFRACW)
-)(
+) log_accum_shift_inst (
     .clk(clk),
     .rst_n(rst_n),
     .i_valid(log_mult_valid),

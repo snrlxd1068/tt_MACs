@@ -16,7 +16,7 @@ module tt_um_snrlxd1068_MACs (
     input  logic       rst_n     // reset_n - low to reset
 );
 
-MAC_top MAC_top(
+MAC_top MAC_top_inst(
   .clk(clk),
   .rst_n(rst_n),
   .i_data(ui_in),
@@ -25,7 +25,7 @@ MAC_top MAC_top(
   .i_valid(uio_in[3]),
   .i_key(uio_in[2]),
   .o_section(uio_out[7:6])
-)
+);
 
   // All output pins must be assigned. If not used, assign to 0.
   assign uio_out [5:0] = 6'b000000;
