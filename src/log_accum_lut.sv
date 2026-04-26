@@ -84,7 +84,10 @@ logic [ADDRW-1:0] addr;
 assign addr = (X_sign == Y_sign)? (diff) : (diff + LUTDEPTH);// ? delta_plus : delta_minus
 
 logic signed [RESULTW-2:0] delta;
-lut_rom mem #(.DATAW(LUTW), .DEPTH(MEMDEPTH))(
+lut_rom #(
+    .DATAW(LUTW),
+    .DEPTH(MEMDEPTH)
+) lut_rom_inst (
     .addr(addr),
     .data_out(delta)
 );
