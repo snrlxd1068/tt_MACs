@@ -8,7 +8,7 @@ module MAC_top #(
     parameter ODATAW = 8,
     parameter DSTEP = 1,
     parameter DMAX = 20,
-    parameter NUMOUTCHUNKS = int'($ceil(RESULTW/ODATAW)),
+    parameter NUMOUTCHUNKS = (RESULTW + ODATAW - 1) / ODATAW,
     parameter OUTSELW = $clog2(NUMOUTCHUNKS)
 
 )(
