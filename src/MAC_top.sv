@@ -69,7 +69,8 @@ always_comb begin
         INIT: begin
             if(r_valid) begin
                 w_valid_data_buffer = r_i_data;
-                nextstate = (r_key == 0)? A_VALID : B_VALID;
+                if (r_key == 0) nextstate = A_VALID;
+                else nextstate = B_VALID;
             end
         end
         A_VALID: begin
@@ -185,7 +186,7 @@ log_mult #(
     .o_valid(log_mult_valid)
 );
 log_accum_lut #(
-    .IINTW(IINTW),
+    .IINTW(IINTW + 1),
     .IFRACW(IFRACW),
     .RESULTINTW(RESULTINTW),
     .RESULTFRACW(RESULTFRACW),
@@ -200,7 +201,7 @@ log_accum_lut #(
     .result(lut_result)
 );
 log_accum_shift #(
-    .IINTW(IINTW),
+    .IINTW(IINTW + 1),
     .IFRACW(IFRACW),
     .RESULTINTW(RESULTINTW),
     .RESULTFRACW(RESULTFRACW)
