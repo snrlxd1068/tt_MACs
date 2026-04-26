@@ -1,5 +1,5 @@
 module log_accum_lut #(
-    parameter IINTW = 3,
+    parameter IINTW = 4,
     parameter IFRACW = 4,
     parameter IDATAW = 1 + IINTW + IFRACW,
     parameter RESULTINTW = 5,
@@ -59,7 +59,7 @@ assign X_sign = result[RESULTW-1];
 
 
 logic signed [RESULTW-2:0] Y_val; // log value of absolute(Y)
-assign Y_val = {{(RESULTINTW - IINTW){1'b0}},r_in_data[IDATAW-2:0],{(RESULTFRACW - IFRACW){1'b0}}}; // input data aligned
+assign Y_val = {{(RESULTINTW - IINTW){r_in_data[IDATAW-2]}},r_in_data[IDATAW-2:0],{(RESULTFRACW - IFRACW){1'b0}}}; // input data aligned
 
 logic Y_sign; // sign of Y
 assign Y_sign = r_in_data[IDATAW-1];
