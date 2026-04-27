@@ -6,8 +6,9 @@ module MAC_top #(
     parameter RESULTINTW = 5,
     parameter RESULTFRACW = 26,
     parameter ODATAW = 8,
-    parameter DSTEP = 1,
-    parameter DMAX = 20,
+    parameter DSTEP = 0,
+    parameter NDSTEP = 20,
+    parameter MAXSHIFT = 20,
     parameter NUMOUTCHUNKS = (RESULTW + ODATAW - 1) / ODATAW,
     parameter OUTSELW = $clog2(NUMOUTCHUNKS)
 
@@ -191,7 +192,7 @@ log_accum_lut #(
     .RESULTINTW(RESULTINTW),
     .RESULTFRACW(RESULTFRACW),
     .DSTEP(DSTEP),
-    .DMAX(DMAX)
+    .NDSTEP(NDSTEP)
 ) log_accum_lut_inst (
     .clk(clk),
     .rst_n(rst_n),
@@ -204,7 +205,8 @@ log_accum_shift #(
     .IINTW(IINTW + 1),
     .IFRACW(IFRACW),
     .RESULTINTW(RESULTINTW),
-    .RESULTFRACW(RESULTFRACW)
+    .RESULTFRACW(RESULTFRACW),
+    .MAXSHIFT(MAXSHIFT)
 ) log_accum_shift_inst (
     .clk(clk),
     .rst_n(rst_n),

@@ -8,9 +8,9 @@ module log_accum_lut #(
     parameter LUTINTW = 2,
     parameter LUTFRACW = 26,
     parameter LUTW = LUTINTW + LUTFRACW,
-    parameter DSTEP = 1,
-    parameter DMAX = 20,
-    parameter LUTDEPTH = DMAX,
+    parameter DSTEP = 0, // 1 step width = 2**DSTEP
+    parameter NDSTEP = 20, // total number of steps
+    parameter LUTDEPTH = NDSTEP,
     parameter MEMDEPTH = 2*LUTDEPTH,
     parameter ADDRW = $clog2(MEMDEPTH)
 
@@ -67,7 +67,8 @@ assign Y_sign = r_in_data[IDATAW-1];
 assign R_sign = (X_val > Y_val)? X_sign: Y_sign;
 
 logic [RESULTW-2:0] diff;
-logic [RESULTW-2:0] scaled_diff;
+logic [RESULTW-2:0] scaled_diff; //difference scaled to number of dsteps
+logic [ADDRW-1:0] addr;
 
 always_comb begin
     if (X_val > Y_val) begin
@@ -76,12 +77,16 @@ always_comb begin
         diff = (Y_val - X_val);
     end
     if (diff[RESULTW-2] == 1) diff = {1'b0,{(RESULTW-2){1'b1}}}; //overflow
-    scaled_diff = diff >> RESULTFRACW;
-    diff = (scaled_diff > (DMAX-1)*DSTEP)? (DMAX-1)*DSTEP : scaled_diff[4:0];
-end
-logic [ADDRW-1:0] addr;
 
-assign addr = (X_sign == Y_sign)? (diff) : (diff + LUTDEPTH);// ? delta_plus : delta_minus
+    scaled_diff = diff >> (RESULTFRACW + DSTEP);
+
+    if(scaled_diff > (NDSTEP - 1)) addr = NDSTEP - 1;
+    else addr = scaled_diff;
+
+    if(X_sign != Y_sign) addr = addr + LUTDEPTH; //delta_minus
+
+end
+
 
 logic signed [RESULTW-2:0] delta;
 logic signed [LUTW-1:0] lut_delta;
@@ -94,12 +99,19 @@ lut_rom #(
     .addr(addr),
     .data(lut_delta)
 );
+logic signed [RESULTW-1:0] R_val_tmp;
 always_comb begin
-    R_val = (X_val > Y_val)? (X_val + delta) : (Y_val + delta);
-    if (R_val[RESULTW-2] == 1 && X_val[RESULTW-2] == 0 && delta[RESULTW-2] == 0) begin
-        R_val = {1'b0, {(RESULTW-2){1'b1}}};
-    end else if (R_val[RESULTW-2] == 0 && X_val[RESULTW-2] == 1 && delta[RESULTW-2] == 1) begin
-        R_val = {1'b1, {(RESULTW-2){1'b0}}};
+    R_val_tmp = (X_val > Y_val)? (X_val + delta) : (Y_val + delta);
+    if (R_val_tmp[31] != R_val_tmp[30]) begin
+        if (R_val_tmp[31] == 1'b0) begin
+            // Positive Overflow: Wrap to Max Positive
+            R_val = {1'b0, {(RESULTW-2){1'b1}}};
+        end else begin
+            // Negative Overflow: Wrap to Max Negative (Floor)
+            R_val = {1'b1, {(RESULTW-2){1'b0}}};
+        end
+    end else begin
+        R_val = R_val_tmp[RESULTW-2:0];
     end
 end
 

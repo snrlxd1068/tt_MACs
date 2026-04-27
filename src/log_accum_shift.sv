@@ -4,7 +4,8 @@ module log_accum_shift #(
     parameter IDATAW = 1 + IINTW + IFRACW,
     parameter RESULTINTW = 5,
     parameter RESULTFRACW = 26,
-    parameter RESULTW = 1 + RESULTINTW + RESULTFRACW
+    parameter RESULTW = 1 + RESULTINTW + RESULTFRACW,
+    parameter MAXSHIFT = 20
 )(
     input clk,
     input rst_n,
@@ -59,6 +60,8 @@ assign R_sign = (X_val > Y_val)? X_sign: Y_sign;
 
 logic [RESULTW-2:0] diff;
 logic [RESULTW-2:0] scaled_diff;
+localparam SHIFTW = $clog2(MAXSHIFT + 1);
+logic [SHIFTW-1:0] shift;
 
 always_comb begin
     if (X_val > Y_val) begin
@@ -68,24 +71,34 @@ always_comb begin
     end
     if (diff[RESULTW-2] == 1) diff = {1'b0,{(RESULTW-2){1'b1}}}; //overflow
     scaled_diff = diff >> RESULTFRACW;
-    diff = (scaled_diff > 5'd19)? 5'd19 : scaled_diff[4:0];
+
+    if(scaled_diff > (MAXSHIFT - 1)) shift = MAXSHIFT - 1;
+    else shift = scaled_diff;
+
+    if (X_sign != Y_sign) shift = shift + 1;
 end
 
 logic signed [RESULTW-2:0] delta;
 logic signed [RESULTW-2:0] base_val;
-logic [4:0] shift;
+
 
 assign base_val = (X_sign == Y_sign)? $signed({{(RESULTINTW-1){1'b0}}, 1'b1, {RESULTFRACW{1'b0}}}) 
                                     : $signed(-{{(RESULTINTW-1){1'b0}}, 2'b11, {(RESULTFRACW-1){1'b0}}});
-assign shift = (X_sign == Y_sign)? diff : (diff + 1);
 assign delta = base_val >>> shift;
 
+logic signed [RESULTW-1:0] R_val_tmp;
 always_comb begin
-    R_val = (X_val > Y_val)? (X_val + delta) : (Y_val + delta);
-    if (R_val[RESULTW-2] == 1 && X_val[RESULTW-2] == 0 && delta[RESULTW-2] == 0) begin
-        R_val = {1'b0, {(RESULTW-2){1'b1}}};
-    end else if (R_val[RESULTW-2] == 0 && X_val[RESULTW-2] == 1 && delta[RESULTW-2] == 1) begin
-        R_val = {1'b1, {(RESULTW-2){1'b0}}};
+    R_val_tmp = (X_val > Y_val)? (X_val + delta) : (Y_val + delta);
+    if (R_val_tmp[31] != R_val_tmp[30]) begin
+        if (R_val_tmp[31] == 1'b0) begin
+            // Positive Overflow: Wrap to Max Positive
+            R_val = {1'b0, {(RESULTW-2){1'b1}}};
+        end else begin
+            // Negative Overflow: Wrap to Max Negative (Floor)
+            R_val = {1'b1, {(RESULTW-2){1'b0}}};
+        end
+    end else begin
+        R_val = R_val_tmp[RESULTW-2:0];
     end
 end
 
