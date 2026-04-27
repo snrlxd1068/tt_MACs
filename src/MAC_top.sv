@@ -50,10 +50,9 @@ always_ff @(posedge clk) begin
     end
 end
 
-logic linear_working;
-
-assign linear_working = !r_mode[1];
-
+logic lut_working, log_working;
+assign log_working = r_mode[1];
+assign lut_working = (r_mode[1] && !r_mode[0]);
 
 logic [IDATAW-1:0] w_a_data, w_b_data; //data signals feeding to multiplier module
 
@@ -111,7 +110,7 @@ assign padded_result = {{PADBITS{1'b0}}, r_result};
 
 logic [OUTSELW-1:0] out_counter;
 
-assign w_result = linear_result;
+assign w_result = lut_result;
 
 always_ff @(posedge clk) begin
     if(~rst_n) begin
@@ -131,34 +130,40 @@ end
 
 
 
-logic linear_mult_valid;
-logic [IDATAW*2-1:0] linear_mult_result;
-logic [RESULTW-1:0] linear_result;
 
-linear_mult #(
-    .IDATAW(IDATAW)
-) linear_mult_inst (
+
+logic log_mult_valid;
+logic [IDATAW:0] log_mult_result;
+logic [RESULTW-1:0] lut_result;
+
+log_mult #(
+    .IINTW(IINTW),
+    .IFRACW(IFRACW)
+) log_mult_inst (
     .clk(clk),
     .rst_n(rst_n),
     .in_a(w_a_data),
     .in_b(w_b_data),
     .i_valid(both_valid),
-    .working(linear_working),
-    .result(linear_mult_result),
-    .o_valid(linear_mult_valid)
+    .working(log_working),
+    .result(log_mult_result),
+    .o_valid(log_mult_valid)
 );
-linear_accum #(
-    .IDATAW(2*IDATAW),
-    .RESULTW(RESULTW)
-) linear_accum_inst (
+log_accum_lut #(
+    .IINTW(IINTW + 1),
+    .IFRACW(IFRACW),
+    .RESULTINTW(RESULTINTW),
+    .RESULTFRACW(RESULTFRACW),
+    .DSTEP(DSTEP),
+    .NDSTEP(NDSTEP)
+) log_accum_lut_inst (
     .clk(clk),
     .rst_n(rst_n),
-    .i_valid(linear_mult_valid),
-    .in_data(linear_mult_result),
-    .working(linear_working),
-    .result(linear_result)
+    .i_valid(log_mult_valid),
+    .in_data(log_mult_result),
+    .working(lut_working),
+    .result(lut_result)
 );
-
 
 
 endmodule
