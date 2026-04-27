@@ -50,10 +50,10 @@ always_ff @(posedge clk) begin
     end
 end
 
-logic linear_working, lut_working, log_working;
+logic linear_working, shift_working, log_working;
 assign linear_working = !r_mode[1];
 assign log_working = r_mode[1];
-assign lut_working = (r_mode[1] && !r_mode[0]);
+assign shift_working = (r_mode[1] && r_mode[0]);
 
 logic [IDATAW-1:0] w_a_data, w_b_data; //data signals feeding to multiplier module
 
@@ -114,7 +114,7 @@ logic [OUTSELW-1:0] out_counter;
 always_comb begin
     case(r_mode)
         2'b00: w_result = linear_result;
-        2'b10: w_result = lut_result;
+        2'b11: w_result = shift_result;
         default: w_result = linear_result;
     endcase
 end
@@ -167,7 +167,7 @@ linear_accum #(
 
 logic log_mult_valid;
 logic [IDATAW:0] log_mult_result;
-logic [RESULTW-1:0] lut_result;
+logic [RESULTW-1:0] shift_result;
 
 log_mult #(
     .IINTW(IINTW),
@@ -182,20 +182,20 @@ log_mult #(
     .result(log_mult_result),
     .o_valid(log_mult_valid)
 );
-log_accum_lut #(
+
+log_accum_shift #(
     .IINTW(IINTW + 1),
     .IFRACW(IFRACW),
     .RESULTINTW(RESULTINTW),
     .RESULTFRACW(RESULTFRACW),
-    .DSTEP(DSTEP),
-    .NDSTEP(NDSTEP)
-) log_accum_lut_inst (
+    .MAXSHIFT(MAXSHIFT)
+) log_accum_shift_inst (
     .clk(clk),
     .rst_n(rst_n),
     .i_valid(log_mult_valid),
     .in_data(log_mult_result),
-    .working(lut_working),
-    .result(lut_result)
+    .working(shift_working),
+    .result(shift_result)
 );
 
 endmodule
