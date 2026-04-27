@@ -50,7 +50,7 @@ always_ff @(posedge clk) begin
     end
 end
 
-logic linear_working
+logic linear_working;
 
 assign linear_working = !r_mode[1];
 
