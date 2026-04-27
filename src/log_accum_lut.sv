@@ -66,25 +66,29 @@ assign Y_sign = r_in_data[IDATAW-1];
 
 assign R_sign = (X_val > Y_val)? X_sign: Y_sign;
 
-logic [RESULTW-2:0] diff;
+logic [RESULTW-2:0] diff_raw;
+assign diff_raw = (X_val > Y_val) ? (X_val - Y_val) : (Y_val - X_val);
+
+logic diff_msb;
+assign diff_msb = diff_raw[RESULTW-2];
+
+logic [RESULTW-2:0] diff_saturated;
+assign diff_saturated = diff_msb ? {1'b0, {(RESULTW-2){1'b1}}} : diff_raw;
+
 logic [RESULTW-2:0] scaled_diff; //difference scaled to number of dsteps
+assign scaled_diff = diff_saturated >> (RESULTFRACW + DSTEP);
+
 logic [ADDRW-1:0] addr;
 
 always_comb begin
-    if (X_val > Y_val) begin
-        diff = (X_val - Y_val);
+    if (scaled_diff > (NDSTEP - 1)) begin
+        addr = (NDSTEP - 1);
     end else begin
-        diff = (Y_val - X_val);
+        addr = scaled_diff[ADDRW-1:0];
     end
-    if (diff[RESULTW-2] == 1) diff = {1'b0,{(RESULTW-2){1'b1}}}; //overflow
-
-    scaled_diff = diff >> (RESULTFRACW + DSTEP);
-
-    if(scaled_diff > (NDSTEP - 1)) addr = NDSTEP - 1;
-    else addr = scaled_diff;
-
-    if(X_sign != Y_sign) addr = addr + LUTDEPTH; //delta_minus
-
+    if (X_sign != Y_sign) begin
+        addr = addr + LUTDEPTH;
+    end
 end
 
 
@@ -100,19 +104,21 @@ lut_rom #(
     .data(lut_delta)
 );
 logic signed [RESULTW-1:0] R_val_tmp;
+
+logic signed [RESULTW-2:0] max_val;
+assign max_val = (X_val > Y_val) ? X_val : Y_val;
+
+assign R_val_tmp = max_val + delta;
+
+logic [1:0] sign_bits;
+assign sign_bits = R_val_tmp[RESULTW-1 : RESULTW-2]; // Bits [31:30]
+
 always_comb begin
-    R_val_tmp = (X_val > Y_val)? (X_val + delta) : (Y_val + delta);
-    if (R_val_tmp[31] != R_val_tmp[30]) begin
-        if (R_val_tmp[31] == 1'b0) begin
-            // Positive Overflow: Wrap to Max Positive
-            R_val = {1'b0, {(RESULTW-2){1'b1}}};
-        end else begin
-            // Negative Overflow: Wrap to Max Negative (Floor)
-            R_val = {1'b1, {(RESULTW-2){1'b0}}};
-        end
-    end else begin
-        R_val = R_val_tmp[RESULTW-2:0];
-    end
+    case (sign_bits)
+        2'b01:   R_val = {1'b0, {(RESULTW-2){1'b1}}}; // Positive Overflow (Max Positive)
+        2'b10:   R_val = {1'b1, {(RESULTW-2){1'b0}}}; // Negative Overflow (Max Negative)
+        default: R_val = R_val_tmp[RESULTW-2:0];      // No Overflow: Normal result
+    endcase
 end
 
 endmodule

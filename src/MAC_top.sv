@@ -51,12 +51,12 @@ always_ff @(posedge clk) begin
 end
 
 logic linear_working, lut_working, shift_working, log_working;
-always_comb begin
-    linear_working = !r_mode[1];
-    log_working = r_mode[1];
-    lut_working = (r_mode[1] && !r_mode[0]);
-    shift_working = (r_mode[1] && r_mode[0]);
-end
+
+assign linear_working = !r_mode[1];
+assign log_working = r_mode[1];
+assign lut_working = (r_mode[1] && !r_mode[0]);
+assign shift_working = (r_mode[1] && r_mode[0]);
+
 
 logic [IDATAW-1:0] w_a_data, w_b_data; //data signals feeding to multiplier module
 
