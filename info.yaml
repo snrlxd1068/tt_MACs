@@ -50,14 +50,14 @@ pinout:
   uo[7]: "out_data[7]"
 
   # Bidirectional pins
-  uio[0]: "i_mode[0]"
-  uio[1]: "i_mode[1]"
-  uio[2]: "i_valid"
-  uio[3]: "i_key"
-  uio[4]: ""
-  uio[5]: ""
-  uio[6]: ""
-  uio[7]: ""
+  uio[0]: ""
+  uio[1]: ""
+  uio[2]: "i_key"
+  uio[3]: "i_valid"
+  uio[4]: "i_mode[0]"
+  uio[5]: "i_mode[1]"
+  uio[6]: "o_section[0]"
+  uio[7]: "o_section[1]"
 
 # Do not change!
 yaml_version: 6
